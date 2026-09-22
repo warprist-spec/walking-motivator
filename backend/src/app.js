@@ -4,6 +4,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 
 const userRoutes = require('./routes/user');
+const stepsRoutes = require('./routes/steps');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
 
 // Роуты
 app.use('/api/user', userRoutes);
+app.use('/api/steps', stepsRoutes);
 
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
