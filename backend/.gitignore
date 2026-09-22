@@ -1,0 +1,15 @@
+# Node
+node_modules/
+
+# Env
+.env
+.env.local
+
+# SQLite
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Логи
+*.log
