@@ -266,3 +266,49 @@ Content-Type: application/json
 **Логирование:**
 - `messages` сохраняет `role: user`, `content: "[screenshot] <extracted steps or error>"`.
 - В таблицу `steps` пишем `source: 'screenshot'`.
+---
+
+## 16. Практика тестирования API
+
+**PowerShell 5.x на Windows отправляет тело HTTP-запроса в системной кодировке (cp1251), не в UTF-8.**
+Это ломает кириллицу при ручных проверках — русские буквы превращаются в `?`.
+
+**Правильный паттерн:**
+```powershell
+$bodyJson = @{ userId = 1; message = "текст" } | ConvertTo-Json -Compress
+$bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($bodyJson)
+Invoke-RestMethod -Uri http://localhost:3000/api/chat -Method Post -Body $bodyBytes -ContentType "application/json; charset=utf-8"
+---
+
+## 18. Технический долг и TODO
+
+### Активные TODO
+
+| Проблема | Приоритет | План | Этап |
+|---|---|---|---|
+| User-stated slip: «пропал на неделю» vs БД «всё ок» | Средний | Добавить `extractSlipFromMessage` в `utils/stepsParser.js`, применять приоритет как для steps | 8+ |
+| `Jest did not exit` после `chat.test.js` | Низкий | `--forceExit` в скрипте `test`, либо `db.close()` в `afterAll` | 10 |
+| LF → CRLF предупреждения при коммите | Низкий | Добавить `.gitattributes` с `* text=auto eol=lf` | любой |
+| `scripts/debug-parser.js` в репозитории | — | **Оставляем** как diagnostic utility — пригодится на Этапе 9 (Vision), для парсинга ответов модели | — |
+
+### Детали: User-stated slip (Этап 8+)
+
+**Проблема:**
+Пользователь пишет «Я пропал на неделю», но в БД есть данные (Android присылал шаги автоматически). AI доверяет БД и отвечает «всё хорошо, ты молодец» — что противоречит состоянию пользователя.
+
+**Решение:**
+1. Добавить функцию `extractSlipFromMessage(message)` в `src/utils/stepsParser.js`
+2. Парсит фразы: «пропал», «не ходил», «давно не отчитывался», «вернулся», «забросил» + опционально количество дней («на неделю», «на 3 дня»)
+3. Возвращает `{ missedDays: number|null, detected: boolean }`
+4. В `chat.js` при `detected=true` — приоритет user-stated над `getMissedDays(userId, db)`, как со steps
+
+**Пример поведения после правки:**
+- Юзер: «Я пропал на неделю» → `missedDays=7` (user-stated)
+- AI отвечает с опорой на 7, а не на `getMissedDays=0` из БД
+
+### Детали: `debug-parser.js`
+
+**Оставляем** в `backend/scripts/`. Комментарий в начале файла:
+```js
+// Diagnostic utility: проверка парсинга шагов из текста.
+// Используется при отладке stepsParser и — начиная с Этапа 9 — при отладке Vision-парсера.

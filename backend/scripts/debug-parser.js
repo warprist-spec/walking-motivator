@@ -1,4 +1,6 @@
-// Диагностика парсера шагов
+// Diagnostic utility: проверка парсинга шагов из текста.
+// Используется при отладке stepsParser и — начиная с Этапа 9 — при отладке Vision-парсера.
+// // Диагностика парсера шагов
 const { extractStepsFromMessage } = require('../src/utils/stepsParser');
 
 const samples = [
