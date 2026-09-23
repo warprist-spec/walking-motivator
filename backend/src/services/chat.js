@@ -12,8 +12,6 @@ const { getStreak, getMissedDays } = require('./habit');
 const { extractStepsFromMessage } = require('../utils/stepsParser');
 const log = require('../utils/logger');
 
-// --- Утилиты ---
-
 function getTodaySteps(userId) {
   const row = db.prepare(
     "SELECT steps FROM steps WHERE user_id = ? AND date = date('now')"
@@ -40,8 +38,6 @@ function saveMessage(userId, role, content) {
   ).run(userId, role, content);
 }
 
-// --- Сборка промпта по сценарию ---
-
 function buildScenarioPrompt(user, scenario, todaySteps) {
   switch (scenario) {
     case 'morning': return buildMorningPrompt(user, todaySteps);
@@ -55,9 +51,7 @@ function buildScenarioPrompt(user, scenario, todaySteps) {
   }
 }
 
-// --- Обычный ответ на сообщение пользователя ---
-
-async function generateReply(userId, userMessage, scenario = null) {
+async function generateReply(userId, userMessage, scenario = null, startingSteps = null) {
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
   if (!user) {
     const err = new Error('User not found');
@@ -65,10 +59,10 @@ async function generateReply(userId, userMessage, scenario = null) {
     throw err;
   }
 
-  // Приоритет: число, названное пользователем, > данные из БД
-  const userStatedSteps = extractStepsFromMessage(userMessage);
-  const dbTodaySteps = getTodaySteps(userId);
-  const effectiveSteps = userStatedSteps !== null ? userStatedSteps : dbTodaySteps;
+  // Приоритет: startingSteps > парсер из message > БД
+  const parsedSteps = extractStepsFromMessage(userMessage);
+  const dbSteps = getTodaySteps(userId);
+  const effectiveSteps = startingSteps ?? parsedSteps ?? dbSteps;
 
   const systemBase = buildSystemPrompt(user, effectiveSteps);
   const scenarioPrompt = buildScenarioPrompt(user, scenario, effectiveSteps);
@@ -86,7 +80,8 @@ async function generateReply(userId, userMessage, scenario = null) {
 
   saveMessage(userId, 'user', userMessage);
 
-log.info(`AI-запрос: user=${userId} scenario=${scenario || 'default'} history=${history.length} msgLen=${userMessage.length} userStated=${userStatedSteps ?? '—'} dbSteps=${dbTodaySteps} effective=${effectiveSteps}`);
+  log.info(`AI-запрос: user=${userId} scenario=${scenario || 'default'} history=${history.length} starting=${startingSteps ?? '—'} parsed=${parsedSteps ?? '—'} db=${dbSteps} effective=${effectiveSteps}`);
+
   const res = await client.chat.completions.create({
     model: MODEL,
     messages,
@@ -109,8 +104,6 @@ log.info(`AI-запрос: user=${userId} scenario=${scenario || 'default'} hist
   };
 }
 
-// --- Proactive-сообщение (cron, без user-message) ---
-
 async function generateProactiveMessage(userId, scenario) {
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
   if (!user) {
@@ -124,8 +117,6 @@ async function generateProactiveMessage(userId, scenario) {
   const scenarioPrompt = buildScenarioPrompt(user, scenario, todaySteps);
   const history = getRecentHistory(userId, 10);
 
-  // В proactive-режиме НЕ добавляем user-message.
-  // Просим AI сгенерировать входящее сообщение.
   const messages = [
     { role: 'system', content: `${systemBase}\n\n${scenarioPrompt}` },
     ...history,
@@ -142,10 +133,7 @@ async function generateProactiveMessage(userId, scenario) {
   });
 
   const reply = res.choices?.[0]?.message?.content?.trim() || '';
-
-  // Сохраняем ТОЛЬКО assistant-сообщение (это proactive)
   saveMessage(userId, 'assistant', reply);
-
   return reply;
 }
 

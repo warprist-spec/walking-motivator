@@ -104,4 +104,26 @@ describe('POST /api/chat — валидация', () => {
     expect(res.body.context.streak).toBeGreaterThanOrEqual(3);
   }, 60_000);
 });
+(hasKey ? describe : describe.skip)('startingSteps priority', () => {
+  let userId;
+  beforeAll(async () => {
+    const res = await request(app).post('/api/user')
+      .send({ email: `st-${Date.now()}@e.com`, name: 'ST', daily_goal: 7000 });
+    userId = res.body.user.id;
+    const d = new Date().toISOString().slice(0, 10);
+    db.prepare('INSERT INTO steps (user_id, date, steps) VALUES (?, ?, ?)').run(userId, d, 9000);
+  });
+
+  test('startingSteps > БД', async () => {
+    const r = await request(app).post('/api/chat')
+      .send({ userId, message: 'Привет', startingSteps: 3000 });
+    expect(r.body.context.todaySteps).toBe(3000);
+  }, 60000);
+
+  test('startingSteps > парсер', async () => {
+    const r = await request(app).post('/api/chat')
+      .send({ userId, message: 'прошёл 5000 шагов', startingSteps: 3000 });
+    expect(r.body.context.todaySteps).toBe(3000);
+  }, 60000);
+});
 });

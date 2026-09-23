@@ -1,10 +1,5 @@
-<!DOCTYPE html>
-<html lang="ru"><head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Walking Motivator</title>
 <style>
-.walk-ai{--c-bg:#f8fafc;--c-s:#fff;--c-b:#e2e8f0;--c-t:#0f172a;--c-t2:#64748b;--c-a:#22c55e;--c-ah:#16a34a;--c-2:#0ea5e9;--c-e:#b45309;--f:system-ui,-apple-system,sans-serif;--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s6:24px;--s8:32px;--s12:48px;--s16:64px;--r-sm:6px;--r-md:10px;--r-lg:16px;--sh:0 4px 20px rgba(15,23,42,.06);--t:.2s ease;font-family:var(--f);font-size:1rem;line-height:1.6;color:var(--c-t);background:var(--c-b);-webkit-font-smoothing:antialiased}
+.walk-ai{--c-bg:#f8fafc;--c-s:#fff;--c-b:#e2e8f0;--c-t:#0f172a;--c-t2:#64748b;--c-a:#22c55e;--c-ah:#16a34a;--c-2:#0ea5e9;--c-e:#b45309;--f:system-ui,-apple-system,sans-serif;--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s6:24px;--s8:32px;--s12:48px;--s16:64px;--r-sm:6px;--r-md:10px;--r-lg:16px;--sh:0 4px 20px rgba(15,23,42,.06);--t:.2s ease;font-family:var(--f);font-size:1rem;line-height:1.6;color:var(--c-t);background:var(--c-bg);-webkit-font-smoothing:antialiased}
 .walk-ai *,.walk-ai *::before,.walk-ai *::after{box-sizing:border-box}
 .walk-ai h1,.walk-ai h2,.walk-ai p{margin:0}
 .walk-ai button{font:inherit;cursor:pointer;border:0;transition:background var(--t)}
@@ -45,7 +40,7 @@
 @media (min-width:640px){.walk-ai .hero__title{font-size:2.75rem}.walk-ai .hero{padding:96px var(--s4) var(--s16)}.walk-ai .onboarding__inner{padding:var(--s8)}}
 @media (prefers-reduced-motion:reduce){.walk-ai *,.walk-ai *::before,.walk-ai *::after{transition:none!important;animation:none!important}}
 </style>
-</head><body>
+
 <div class="walk-ai">
   <header class="hero">
     <div class="hero__inner">
@@ -61,15 +56,23 @@
       <h2 class="onboarding__title">Немного о тебе</h2>
       <p class="onboarding__hint">Заполним за минуту. Никакого спама и отчётов.</p>
       <form id="onboarding-form" novalidate>
-        <div class="field"><label for="email">Email</label>
-          <input id="email" type="email" required autocomplete="email"></div>
-        <div class="field"><label for="name">Как тебя зовут?</label>
-          <input id="name" type="text" required autocomplete="given-name"></div>
-        <div class="field"><label for="current-steps">Сколько шагов проходишь сейчас?</label>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="name">Как тебя зовут?</label>
+          <input id="name" type="text" required autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label for="current-steps">Сколько шагов проходишь сейчас?</label>
           <input id="current-steps" type="number" inputmode="numeric" min="0">
-          <p class="field__hint">Примерно. Нужно, чтобы AI подобрал мягкий старт — не для отчёта.</p></div>
-        <div class="field"><label for="daily-goal">Дневная цель</label>
-          <input id="daily-goal" type="number" inputmode="numeric" min="1" required></div>
+          <p class="field__hint">Примерно. Нужно, чтобы AI подобрал мягкий старт — не для отчёта.</p>
+        </div>
+        <div class="field">
+          <label for="daily-goal">Дневная цель</label>
+          <input id="daily-goal" type="number" inputmode="numeric" min="1" required>
+        </div>
         <p id="form-error" class="form__error" role="alert" hidden></p>
         <button class="form__submit" type="submit">Продолжить</button>
       </form>
@@ -89,7 +92,10 @@
     </div>
   </section>
 
-  <footer class="footer"><p class="footer__note">Сделано спокойно. Без геймификации и упрёков.</p></footer>
+  <footer class="footer">
+    <p class="footer__note">Сделано спокойно. Без геймификации и упрёков.</p>
+  </footer>
 </div>
+
+<script>window.WALK_AI_API='https://your-backend.railway.app';</script>
 <script src="widget.js"></script>
-</body></html>

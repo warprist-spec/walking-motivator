@@ -11,6 +11,7 @@ const ChatSchema = z.object({
   userId: z.number().int().positive(),
   message: z.string().min(1, 'message is required').max(2000),
   scenario: z.enum(['morning', 'day', 'evening', 'slip']).optional(),
+  startingSteps: z.number().int().min(100).max(100000).nullable().optional(),
 });
 
 router.post('/', async (req, res) => {
@@ -19,16 +20,15 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
   }
 
-  const { userId, message, scenario } = parsed.data;
+  const { userId, message, scenario, startingSteps } = parsed.data;
 
-  // Проверка существования пользователя ДО обращения к AI
   const user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
 
   try {
-    const result = await generateReply(userId, message, scenario || null);
+    const result = await generateReply(userId, message, scenario || null, startingSteps ?? null);
     res.json({
       reply: result.reply,
       context: result.context,
