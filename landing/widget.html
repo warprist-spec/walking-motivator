@@ -1,24 +1,24 @@
 <style>
-.walk-ai{--c-bg:#f8fafc;--c-s:#fff;--c-b:#e2e8f0;--c-t:#0f172a;--c-t2:#64748b;--c-a:#22c55e;--c-ah:#16a34a;--c-2:#0ea5e9;--c-e:#b45309;--f:system-ui,-apple-system,sans-serif;--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s6:24px;--s8:32px;--s12:48px;--s16:64px;--r-sm:6px;--r-md:10px;--r-lg:16px;--sh:0 4px 20px rgba(15,23,42,.06);--t:.2s ease;font-family:var(--f);font-size:1rem;line-height:1.6;color:var(--c-t);background:var(--c-bg);-webkit-font-smoothing:antialiased}
+.walk-ai{--c-bg:#f5f1ea;--c-s:#fffdf9;--c-b:#e6ddcf;--c-t:#2b2620;--c-t2:#6b6459;--c-a:#6b8e4e;--c-ah:#587a3d;--c-2:#8a7355;--c-e:#a15c2c;--f:system-ui,-apple-system,sans-serif;--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s6:24px;--s8:32px;--s12:48px;--s16:64px;--r-sm:4px;--r-md:8px;--r-lg:12px;--sh:0 4px 20px rgba(43,38,32,.08);--t:.2s ease;font-family:var(--f);font-size:1rem;line-height:1.7;color:var(--c-t);background:var(--c-bg);-webkit-font-smoothing:antialiased}
 .walk-ai *,.walk-ai *::before,.walk-ai *::after{box-sizing:border-box}
 .walk-ai h1,.walk-ai h2,.walk-ai p{margin:0}
 .walk-ai button{font:inherit;cursor:pointer;border:0;transition:background var(--t)}
 .walk-ai input{font:inherit;transition:border-color var(--t),box-shadow var(--t)}
-.walk-ai .hero{padding:var(--s16) var(--s4) var(--s12);text-align:center}
+.walk-ai .hero{padding:var(--s16) var(--s4) var(--s12);text-align:center;background:#f0e9dd}
 .walk-ai .hero__inner{max-width:640px;margin:0 auto}
 .walk-ai .hero__mark{font-size:2.5rem;display:block;margin-bottom:var(--s4)}
-.walk-ai .hero__title{font-size:2rem;font-weight:600;line-height:1.2;margin-bottom:var(--s4)}
+.walk-ai .hero__title{font-size:1.75rem;font-weight:500;line-height:1.25;margin-bottom:var(--s4)}
 .walk-ai .hero__subtitle{color:var(--c-t2);margin-bottom:var(--s8);max-width:32ch;margin-inline:auto}
 .walk-ai .hero__cta{background:var(--c-a);color:#fff;padding:var(--s3) var(--s8);border-radius:var(--r-md);font-weight:500}
 .walk-ai .hero__cta:hover{background:var(--c-ah)}
 .walk-ai .onboarding{padding:var(--s12) var(--s4)}
 .walk-ai .onboarding__inner{max-width:480px;margin:0 auto;background:var(--c-s);padding:var(--s6);border-radius:var(--r-lg);box-shadow:var(--sh)}
-.walk-ai .onboarding__title{font-size:1.375rem;font-weight:600;margin-bottom:var(--s2)}
+.walk-ai .onboarding__title{font-size:1.25rem;font-weight:500;margin-bottom:var(--s2)}
 .walk-ai .onboarding__hint{color:var(--c-t2);font-size:.875rem;margin-bottom:var(--s6)}
 .walk-ai .field{margin-bottom:var(--s4)}
 .walk-ai .field label{display:block;font-size:.875rem;font-weight:500;margin-bottom:var(--s2)}
 .walk-ai .field input{width:100%;padding:var(--s3) var(--s4);border:1px solid var(--c-b);border-radius:var(--r-sm);background:var(--c-s);color:var(--c-t)}
-.walk-ai .field input:focus{outline:none;border-color:var(--c-a);box-shadow:0 0 0 3px rgba(34,197,94,.15)}
+.walk-ai .field input:focus{outline:none;border-color:var(--c-a);box-shadow:0 0 0 3px rgba(107,142,78,.15)}
 .walk-ai .field__hint{font-size:.875rem;color:var(--c-t2);margin-top:var(--s1)}
 .walk-ai .form__error{color:var(--c-e);font-size:.875rem;margin-bottom:var(--s3)}
 .walk-ai .form__submit{width:100%;background:var(--c-a);color:#fff;padding:var(--s3);border-radius:var(--r-md);font-weight:500}
@@ -29,7 +29,7 @@
 .walk-ai .chat__status{font-size:.875rem;color:var(--c-t2)}
 .walk-ai .chat__log{padding:var(--s4);max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:var(--s3)}
 .walk-ai .message{max-width:80%;padding:var(--s2) var(--s4);border-radius:var(--r-md);font-size:.875rem;line-height:1.5}
-.walk-ai .message--ai{background:#f1f5f9;align-self:flex-start}
+.walk-ai .message--ai{background:#efe9de;color:var(--c-t);align-self:flex-start}
 .walk-ai .message--user{background:var(--c-2);color:#fff;align-self:flex-end}
 .walk-ai .chat__form{display:flex;gap:var(--s2);padding:var(--s3);border-top:1px solid var(--c-b)}
 .walk-ai .chat__form input{flex:1;padding:var(--s2) var(--s3);border:1px solid var(--c-b);border-radius:var(--r-sm)}
@@ -37,7 +37,7 @@
 .walk-ai .chat__send:hover{background:var(--c-ah)}
 .walk-ai .footer{padding:var(--s8) var(--s4);text-align:center}
 .walk-ai .footer__note{font-size:.875rem;color:var(--c-t2)}
-@media (min-width:640px){.walk-ai .hero__title{font-size:2.75rem}.walk-ai .hero{padding:96px var(--s4) var(--s16)}.walk-ai .onboarding__inner{padding:var(--s8)}}
+@media (min-width:640px){.walk-ai .hero__title{font-size:2.5rem}.walk-ai .hero{padding:96px var(--s4) var(--s16)}.walk-ai .onboarding__inner{padding:var(--s8)}}
 @media (prefers-reduced-motion:reduce){.walk-ai *,.walk-ai *::before,.walk-ai *::after{transition:none!important;animation:none!important}}
 </style>
 
