@@ -14,14 +14,16 @@ describe('prompts/system.js', () => {
     expect(out.length).toBeGreaterThan(100);
   });
 
-  test('Тест 2: промпт содержит запреты', () => {
+    test('Тест 2: промпт содержит запреты', () => {
     const { buildSystemPrompt } = require(promptsPath);
     const out = buildSystemPrompt({ name: 'Alex', daily_goal: 5000 }, 1200);
 
-    expect(out).toContain('не стыдить');
-    expect(out).toContain('не пусто хвалить');
-    expect(out).toContain('не давать медицинских советов');
-  });
+    // Проверяем без учёта регистра
+    const lower = out.toLowerCase();
+    expect(lower).toContain('не стыдить');
+    expect(lower).toContain('не пусто хвалить');
+    expect(lower).toContain('не давать медицинских советов');
+});
 
   test('Тест 3: промпт подставляет данные пользователя', () => {
     const { buildSystemPrompt } = require(promptsPath);

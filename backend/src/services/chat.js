@@ -8,7 +8,11 @@ const {
   buildEveningPrompt,
   buildSlipPrompt,
 } = require('../prompts/scenarios');
+const { getStreak, getMissedDays } = require('./habit');
+const { extractStepsFromMessage } = require('../utils/stepsParser');
 const log = require('../utils/logger');
+
+// --- Утилиты ---
 
 function getTodaySteps(userId) {
   const row = db.prepare(
@@ -36,15 +40,22 @@ function saveMessage(userId, role, content) {
   ).run(userId, role, content);
 }
 
+// --- Сборка промпта по сценарию ---
+
 function buildScenarioPrompt(user, scenario, todaySteps) {
   switch (scenario) {
     case 'morning': return buildMorningPrompt(user, todaySteps);
     case 'day':     return buildDayPrompt(user, todaySteps);
     case 'evening': return buildEveningPrompt(user, todaySteps, getYesterdaySteps(user.id));
-    case 'slip':    return buildSlipPrompt(user, 2); // TODO(Этап 7): реальный подсчёт
+    case 'slip': {
+      const missed = getMissedDays(user.id, db);
+      return buildSlipPrompt(user, missed);
+    }
     default:        return '';
   }
 }
+
+// --- Обычный ответ на сообщение пользователя ---
 
 async function generateReply(userId, userMessage, scenario = null) {
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
@@ -54,9 +65,13 @@ async function generateReply(userId, userMessage, scenario = null) {
     throw err;
   }
 
-  const todaySteps = getTodaySteps(userId);
-  const systemBase = buildSystemPrompt(user, todaySteps);
-  const scenarioPrompt = buildScenarioPrompt(user, scenario, todaySteps);
+  // Приоритет: число, названное пользователем, > данные из БД
+  const userStatedSteps = extractStepsFromMessage(userMessage);
+  const dbTodaySteps = getTodaySteps(userId);
+  const effectiveSteps = userStatedSteps !== null ? userStatedSteps : dbTodaySteps;
+
+  const systemBase = buildSystemPrompt(user, effectiveSteps);
+  const scenarioPrompt = buildScenarioPrompt(user, scenario, effectiveSteps);
   const history = getRecentHistory(userId, 10);
 
   const systemContent = scenarioPrompt
@@ -71,8 +86,7 @@ async function generateReply(userId, userMessage, scenario = null) {
 
   saveMessage(userId, 'user', userMessage);
 
-  log.info(`AI-запрос: user=${userId} scenario=${scenario || 'default'} history=${history.length}`);
-
+log.info(`AI-запрос: user=${userId} scenario=${scenario || 'default'} history=${history.length} msgLen=${userMessage.length} userStated=${userStatedSteps ?? '—'} dbSteps=${dbTodaySteps} effective=${effectiveSteps}`);
   const res = await client.chat.completions.create({
     model: MODEL,
     messages,
@@ -87,12 +101,57 @@ async function generateReply(userId, userMessage, scenario = null) {
     reply,
     context: {
       currentNorm: user.daily_goal,
-      todaySteps,
-      streak: 0, // TODO(Этап 7)
+      todaySteps: effectiveSteps,
+      streak: getStreak(userId, db),
     },
     model: res.model,
     tokens: res.usage || null,
   };
 }
 
-module.exports = { generateReply, getTodaySteps, getRecentHistory };
+// --- Proactive-сообщение (cron, без user-message) ---
+
+async function generateProactiveMessage(userId, scenario) {
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  if (!user) {
+    const err = new Error('User not found');
+    err.status = 404;
+    throw err;
+  }
+
+  const todaySteps = getTodaySteps(userId);
+  const systemBase = buildSystemPrompt(user, todaySteps);
+  const scenarioPrompt = buildScenarioPrompt(user, scenario, todaySteps);
+  const history = getRecentHistory(userId, 10);
+
+  // В proactive-режиме НЕ добавляем user-message.
+  // Просим AI сгенерировать входящее сообщение.
+  const messages = [
+    { role: 'system', content: `${systemBase}\n\n${scenarioPrompt}` },
+    ...history,
+    { role: 'user', content: '[SYSTEM] Сгенерируй одно короткое входящее сообщение для пользователя по сценарию выше. Без префиксов.' },
+  ];
+
+  log.info(`AI-proactive: user=${userId} scenario=${scenario} history=${history.length}`);
+
+  const res = await client.chat.completions.create({
+    model: MODEL,
+    messages,
+    temperature: Number(process.env.OPENAI_TEMPERATURE) || 0.7,
+    max_tokens: 300,
+  });
+
+  const reply = res.choices?.[0]?.message?.content?.trim() || '';
+
+  // Сохраняем ТОЛЬКО assistant-сообщение (это proactive)
+  saveMessage(userId, 'assistant', reply);
+
+  return reply;
+}
+
+module.exports = {
+  generateReply,
+  generateProactiveMessage,
+  getTodaySteps,
+  getRecentHistory,
+};

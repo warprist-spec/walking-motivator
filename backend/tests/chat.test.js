@@ -71,4 +71,37 @@ describe('POST /api/chat — валидация', () => {
     // Без нового вызова AI — проверяем результат Теста 3
     expect(messagesAfter - messagesBefore).toBe(2); // user + assistant
   });
+  // --- Тест 5: context.streak — не всегда 0 (Этап 7) ---
+
+(hasKey ? describe : describe.skip)('POST /api/chat — реальный streak', () => {
+  let userId;
+
+  beforeAll(async () => {
+    const email = `streak-chat-${Date.now()}@example.com`;
+    const res = await request(app)
+      .post('/api/user')
+      .send({ email, name: 'StreakChat', daily_goal: 5000 });
+
+    userId = res.body.user.id;
+
+    // Готовим данные: 3 дня подряд выполнено
+    const d = (n) => {
+      const x = new Date();
+      x.setDate(x.getDate() - n);
+      return x.toISOString().slice(0, 10);
+    };
+    db.prepare('INSERT INTO steps (user_id, date, steps) VALUES (?, ?, ?)').run(userId, d(0), 6000);
+    db.prepare('INSERT INTO steps (user_id, date, steps) VALUES (?, ?, ?)').run(userId, d(1), 5500);
+    db.prepare('INSERT INTO steps (user_id, date, steps) VALUES (?, ?, ?)').run(userId, d(2), 5000);
+  });
+
+  test('Тест 5: context.streak отражает реальные данные', async () => {
+    const res = await request(app)
+      .post('/api/chat')
+      .send({ userId, message: 'Привет' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.context.streak).toBeGreaterThanOrEqual(3);
+  }, 60_000);
+});
 });
