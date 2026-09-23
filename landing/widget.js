@@ -1,10 +1,11 @@
-// AI-виджет Walking Motivator — Этап 8
+// AI-виджет Walking Motivator — Этап 8.5 (ngrok)
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.WalkAI = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
-  const API_BASE = window.WALK_AI_API || 'http://localhost:3000';
+  const API_BASE = 'https://guzzler-aversion-doctrine.ngrok-free.dev';
   const LS_KEY = 'walk_ai_user_id';
+  const NGROK_HEADER = { 'ngrok-skip-browser-warning': 'true' };
 
   function escapeHtml(s) {
     if (s == null) return '';
@@ -23,13 +24,16 @@
     if (currentSteps == null || currentSteps === '' || isNaN(Number(currentSteps))) {
       return `Привет, ${name}. Цель — ${dailyGoal} шагов в день. Давай для начала просто замерим обычный день — сколько получится без усилий.`;
     }
-    return `Привет, ${name}. Сейчас я прохожу в среднем ${currentSteps} шагов в день. Цель — ${dailyGoal}.`;
+    return `Привет, меня зовут ${name}. Сейчас я прохожу в среднем ${currentSteps} шагов в день. Цель — ${dailyGoal}.`;
   }
 
   async function submitOnboarding({ email, name, currentSteps, dailyGoal }) {
     const res = await fetch(`${API_BASE}/api/user`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...NGROK_HEADER,
+      },
       body: JSON.stringify({ email, name, daily_goal: Number(dailyGoal) }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -41,7 +45,10 @@
     if (startingSteps != null && startingSteps !== '') body.startingSteps = Number(startingSteps);
     const res = await fetch(`${API_BASE}/api/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...NGROK_HEADER,
+      },
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -49,7 +56,6 @@
     return data.reply;
   }
 
-  // --- UI (только в браузере) ---
   function initWidget() {
     const $ = (s) => document.querySelector(s);
     const form = $('#onboarding-form');
@@ -68,7 +74,7 @@
     function render(role, text) {
       const div = document.createElement('div');
       div.className = `message message--${role}`;
-      div.textContent = text; // защита от XSS
+      div.textContent = text;
       log.appendChild(div);
       log.scrollTop = log.scrollHeight;
     }

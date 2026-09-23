@@ -97,5 +97,124 @@
   </footer>
 </div>
 
-<script>window.WALK_AI_API='https://your-backend.railway.app';</script>
-<script src="widget.js"></script>
+<script>
+(function () {
+  var API_BASE = 'https://guzzler-aversion-doctrine.ngrok-free.dev';
+  var LS_KEY = 'walk_ai_user_id';
+  var NGROK = { 'ngrok-skip-browser-warning': 'true' };
+
+  function saveUserId(id) { localStorage.setItem(LS_KEY, String(id)); }
+  function getUserId() {
+    var v = localStorage.getItem(LS_KEY);
+    return v == null ? null : Number(v);
+  }
+
+  function buildFirstMessage(name, currentSteps, dailyGoal) {
+    if (currentSteps == null || currentSteps === '' || isNaN(Number(currentSteps))) {
+      return 'Привет, ' + name + '. Цель — ' + dailyGoal + ' шагов в день. Давай для начала просто замерим обычный день — сколько получится без усилий.';
+    }
+    return 'Привет, меня зовут ' + name + '. Сейчас я прохожу в среднем ' + currentSteps + ' шагов в день. Цель — ' + dailyGoal + '.';
+  }
+
+  function submitOnboarding(data) {
+    return fetch(API_BASE + '/api/user', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, NGROK),
+      body: JSON.stringify({ email: data.email, name: data.name, daily_goal: Number(data.dailyGoal) })
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  function sendMessage(userId, message, startingSteps) {
+    var body = { userId: userId, message: message };
+    if (startingSteps != null && startingSteps !== '') body.startingSteps = Number(startingSteps);
+    return fetch(API_BASE + '/api/chat', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, NGROK),
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (d) { return d.reply; });
+  }
+
+  function init() {
+    var $ = function (s) { return document.querySelector(s); };
+    var form = $('#onboarding-form');
+    var chat = $('#chat-section');
+    var log = $('#chat-log');
+    var chatForm = $('#chat-form');
+    var err = $('#form-error');
+    var heroCta = $('#hero-cta');
+    var userId = getUserId();
+
+    if (heroCta) heroCta.addEventListener('click', function () {
+      $('#onboarding-form').scrollIntoView({ behavior: 'smooth' });
+      $('#email').focus();
+    });
+
+    function render(role, text) {
+      var div = document.createElement('div');
+      div.className = 'message message--' + role;
+      div.textContent = text;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+    function showError(msg) { err.textContent = msg; err.hidden = false; }
+
+    if (form) form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      err.hidden = true;
+      var email = $('#email').value.trim();
+      var name = $('#name').value.trim();
+      var currentSteps = $('#current-steps').value.trim();
+      var dailyGoal = $('#daily-goal').value.trim();
+
+      if (!email || email.indexOf('@') < 0) return showError('Проверь, пожалуйста, email');
+      if (!name) return showError('Проверь, пожалуйста, имя');
+      if (!dailyGoal || Number(dailyGoal) <= 0) return showError('Проверь, пожалуйста, цель');
+
+      var btn = form.querySelector('.form__submit');
+      btn.disabled = true;
+      submitOnboarding({ email: email, name: name, currentSteps: currentSteps, dailyGoal: dailyGoal })
+        .then(function (res) {
+          userId = res.user.id;
+          saveUserId(userId);
+          var firstMsg = buildFirstMessage(name, currentSteps, dailyGoal);
+          render('user', firstMsg);
+          return sendMessage(userId, firstMsg, currentSteps || null);
+        })
+        .then(function (reply) {
+          render('ai', reply);
+          form.closest('section').hidden = true;
+          chat.hidden = false;
+        })
+        .catch(function () { showError('Что-то пошло не так. Попробуй ещё раз.'); })
+        .then(function () { btn.disabled = false; });
+    });
+
+    if (chatForm) chatForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var input = $('#chat-input');
+      var text = input.value.trim();
+      if (!text) return;
+      render('user', text);
+      input.value = '';
+      var btn = chatForm.querySelector('.chat__send');
+      btn.disabled = true;
+      sendMessage(userId, text)
+        .then(function (reply) { render('ai', reply); })
+        .catch(function () { render('ai', 'Связь пропала. Попробуй ещё раз.'); })
+        .then(function () { btn.disabled = false; });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
