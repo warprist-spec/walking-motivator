@@ -46,6 +46,7 @@ async function runMorningCheck() {
       log.error(`[scheduler] morning check: user=${user.id} failed: ${err.message}`);
       skipped++;
     }
+    await new Promise(r => setTimeout(r, 1500));
   }
 
   logJob('morning', process.env.AI_TIMEZONE, users.length, messaged, skipped);
@@ -69,6 +70,8 @@ async function runDayCheck() {
       log.error(`[scheduler] day check: user=${user.id} failed: ${err.message}`);
       skipped++;
     }
+    await new Promise(r => setTimeout(r, 1500));
+
   }
 
   logJob('day', process.env.AI_TIMEZONE, users.length, messaged, skipped);
@@ -93,6 +96,7 @@ async function runEveningCheck() {
       log.error(`[scheduler] evening check: user=${user.id} failed: ${err.message}`);
       skipped++;
     }
+    await new Promise(r => setTimeout(r, 1500));
   }
 
   logJob('evening', process.env.AI_TIMEZONE, users.length, messaged, skipped);

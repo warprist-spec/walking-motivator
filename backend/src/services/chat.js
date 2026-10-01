@@ -64,7 +64,11 @@ async function generateReply(userId, userMessage, scenario = null, startingSteps
   const dbSteps = getTodaySteps(userId);
   const effectiveSteps = startingSteps ?? parsedSteps ?? dbSteps;
 
-  const systemBase = buildSystemPrompt(user, effectiveSteps);
+  const hasHistory = getRecentHistory(userId, 1).length > 0;
+  const systemBase = buildSystemPrompt(user, effectiveSteps, {
+  isFirstMessage: !hasHistory,
+  avgDailySteps: startingSteps,
+  });
   const scenarioPrompt = buildScenarioPrompt(user, scenario, effectiveSteps);
   const history = getRecentHistory(userId, 10);
 
