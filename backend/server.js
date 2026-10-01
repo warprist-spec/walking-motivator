@@ -8,7 +8,10 @@ app.listen(PORT, () => {
   console.log(`🚶 Walking Motivator API running on http://localhost:${PORT}`);
 
   // Планировщик не запускаем в тестовом режиме
-  if (process.env.NODE_ENV !== 'test') {
-    registerJobs();
-  }
+const schedulerEnabled = process.env.SCHEDULER_ENABLED === 'true';
+if (process.env.NODE_ENV !== 'test' && schedulerEnabled) {
+  registerJobs();
+} else {
+  console.log('⏸️  Scheduler disabled (SCHEDULER_ENABLED != true)');
+}
 });
