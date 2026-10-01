@@ -2,6 +2,9 @@ const express = require('express');
 const { z } = require('zod');
 const db = require('../db');
 const log = require('../utils/logger');
+const { notifyNewUser } = require('../services/telegram');
+
+
 
 const router = express.Router();
 
@@ -37,9 +40,12 @@ router.post('/', (req, res) => {
 
     user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
     log.info('Создан новый пользователь', user.id, user.email || user.tg_id);
-    return res.status(201).json({ user, created: true });
-  }
 
+    // Fire-and-forget: не блокируем ответ
+    notifyNewUser({ ...user, avg_steps: req.body.current_steps });
+
+    return res.status(201).json({ user, created: true });
+   }
   log.info('Найден пользователь', user.id);
   res.json({ user, created: false });
 });
