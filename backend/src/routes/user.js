@@ -15,6 +15,7 @@ const UserSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   timezone: z.string().default('Europe/Berlin'),
   daily_goal: z.number().int().min(1000).max(50000).default(6000),
+  current_steps: z.number().int().min(100).max(100000).nullable().optional(),
 }).refine(d => d.email || d.tg_id, {
   message: 'Нужен email или tg_id',
 });
@@ -25,7 +26,7 @@ router.post('/', (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
   }
-  const { email, tg_id, name, timezone, daily_goal } = parsed.data;
+  const { email, tg_id, name, timezone, daily_goal, current_steps } = parsed.data;
 
   // Ищем существующего
   const findBy = email ? 'email' : 'tg_id';
@@ -42,7 +43,8 @@ router.post('/', (req, res) => {
     log.info('Создан новый пользователь', user.id, user.email || user.tg_id);
 
     // Fire-and-forget: не блокируем ответ
-    notifyNewUser({ ...user, avg_steps: req.body.current_steps });
+    notifyNewUser({ ...user, avg_steps: current_steps });
+
 
     return res.status(201).json({ user, created: true });
    }

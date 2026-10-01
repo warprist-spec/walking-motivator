@@ -34,8 +34,12 @@
         'Content-Type': 'application/json',
         ...NGROK_HEADER,
       },
-      body: JSON.stringify({ email, name, daily_goal: Number(dailyGoal) }),
-    });
+    body: JSON.stringify({
+      email,
+      name,
+      daily_goal: Number(dailyGoal),
+      current_steps: currentSteps ? Number(currentSteps) : null,
+    }),    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   }

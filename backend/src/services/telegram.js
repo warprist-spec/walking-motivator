@@ -2,8 +2,9 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env') });
 const log = require('../utils/logger');
 
-async function notifyNewUser(user) {
-  try {
+async function notifyNewUser(user, currentSteps = null) {
+
+    try {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
@@ -18,7 +19,7 @@ async function notifyNewUser(user) {
 
     const text = `👟 Новый пользователь
 Имя: ${user.name || '—'}
-Средние шаги: ${user.avg_steps ?? '—'}
+Средние шаги: ${currentSteps ?? user.avg_steps ?? '—'}
 Цель: ${user.daily_goal ?? '—'}`;
 
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
