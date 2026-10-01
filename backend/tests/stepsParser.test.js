@@ -38,4 +38,35 @@ describe('stepsParser.extractStepsFromMessage', () => {
   test('Тест 9: «я прошёл 500 км» → null (км, не шаги)', () => {
     expect(extractStepsFromMessage('я прошёл 500 км')).toBeNull();
   });
+  const { extractSlipFromMessage } = require('../src/utils/stepsParser');
+
+describe('stepsParser.extractSlipFromMessage', () => {
+  test('«пропал на неделю» → detected, 7 дней', () => {
+    const r = extractSlipFromMessage('Я пропал на неделю');
+    expect(r.detected).toBe(true);
+    expect(r.missedDays).toBe(7);
+  });
+
+  test('«не ходил 3 дня» → detected, 3 дня', () => {
+    const r = extractSlipFromMessage('не ходил 3 дня');
+    expect(r.detected).toBe(true);
+    expect(r.missedDays).toBe(3);
+  });
+
+  test('«забросил» → detected, дней нет', () => {
+    const r = extractSlipFromMessage('Что-то я забросил прогулки');
+    expect(r.detected).toBe(true);
+    expect(r.missedDays).toBeNull();
+  });
+
+  test('«привет, как дела» → не срыв', () => {
+    const r = extractSlipFromMessage('Привет, как дела');
+    expect(r.detected).toBe(false);
+  });
+
+  test('пусто → не срыв', () => {
+    expect(extractSlipFromMessage('').detected).toBe(false);
+    expect(extractSlipFromMessage(null).detected).toBe(false);
+  });
+});
 });

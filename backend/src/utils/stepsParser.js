@@ -39,5 +39,47 @@ function extractStepsFromMessage(message) {
 
   return null;
 }
+// Парсер фраз про срыв («пропал на неделю», «не ходил 3 дня»)
+// Возвращает { detected: bool, missedDays: number|null }
+// Парсер фраз про срыв («пропал на неделю», «не ходил 3 дня»)
+// Возвращает { detected: bool, missedDays: number|null }
+function extractSlipFromMessage(message) {
+  if (!message || typeof message !== 'string') {
+    return { detected: false, missedDays: null };
+  }
 
-module.exports = { extractStepsFromMessage };
+  const normalized = message.replace(/[\u00A0\u202F\u2009]/g, ' ').toLowerCase();
+
+  // Триггерные слова (без \b — работает для кириллицы)
+  const triggers = [
+    'пропал', 'пропала', 'забросил', 'забросила',
+    'не ходил', 'не ходила', 'не отчитывался', 'не отчитывалась',
+    'давно не', 'перестал', 'перестала', 'вернулся', 'вернулась',
+  ];
+  const detected = triggers.some(t => normalized.includes(t));
+  if (!detected) {
+    return { detected: false, missedDays: null };
+  }
+
+  // Попытка вытащить число дней: "3 дня", "7 дней"
+  const numMatch = normalized.match(/(\d+)\s*(дн|день|дня|дней)/);
+  if (numMatch) {
+    return { detected: true, missedDays: Number(numMatch[1]) };
+  }
+
+  // Слова-числа
+  const wordMap = [
+    ['неделю', 7], ['неделя', 7], ['две недели', 14], ['месяц', 30],
+    ['один день', 1], ['два дня', 2], ['три дня', 3],
+    ['четыре дня', 4], ['пять дней', 5], ['шесть дней', 6],
+  ];
+  for (const [phrase, days] of wordMap) {
+    if (normalized.includes(phrase)) {
+      return { detected: true, missedDays: days };
+    }
+  }
+
+  return { detected: true, missedDays: null };
+}
+
+module.exports = { extractStepsFromMessage, extractSlipFromMessage };
