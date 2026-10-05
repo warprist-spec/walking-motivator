@@ -10,4 +10,4 @@
 ## 3. Укажи API backend
 В конце фрагмента, перед `<script src="widget.js">`:
 ```html
-<script>window.WALK_AI_API='http://localhost:3000';</script>
+<script>window.WALK_AI_API='https://walking-motivator.duckdns.org';</script>
