@@ -1,4 +1,4 @@
-// AI-виджет Walking Motivator — Этап 8.5 (ngrok)
+// AI-виджет Walking Motivator — Этап 9 (Vision)
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.WalkAI = factory();
@@ -34,12 +34,13 @@
         'Content-Type': 'application/json',
         ...NGROK_HEADER,
       },
-    body: JSON.stringify({
-      email,
-      name,
-      daily_goal: Number(dailyGoal),
-      current_steps: currentSteps ? Number(currentSteps) : null,
-    }),    });
+      body: JSON.stringify({
+        email,
+        name,
+        daily_goal: Number(dailyGoal),
+        current_steps: currentSteps ? Number(currentSteps) : null,
+      }),
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   }
@@ -60,6 +61,26 @@
     return data.reply;
   }
 
+  async function submitScreenshot(userId, file) {
+    const formData = new FormData();
+    formData.append('userId', String(userId));
+    formData.append('image', file);
+
+    const res = await fetch(`${API_BASE}/api/screenshot`, {
+      method: 'POST',
+      headers: { ...NGROK_HEADER },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const err = new Error(data.error || `HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    return res.json();
+  }
+
   function initWidget() {
     const $ = (s) => document.querySelector(s);
     const form = $('#onboarding-form');
@@ -68,6 +89,8 @@
     const chatForm = $('#chat-form');
     const err = $('#form-error');
     const heroCta = $('#hero-cta');
+    const attachBtn = $('#attach-btn');
+    const fileInput = $('#screenshot-input');
     let userId = getUserId();
 
     if (heroCta) heroCta.addEventListener('click', () => {
@@ -139,12 +162,50 @@
         btn.disabled = false;
       }
     });
+
+    if (attachBtn && fileInput) {
+      attachBtn.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', async () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        if (!userId) {
+          render('ai', 'Сначала пройди онбординг.');
+          return;
+        }
+
+        render('user', '📎 Скриншот шагомера');
+        attachBtn.disabled = true;
+
+        try {
+          const result = await submitScreenshot(userId, file);
+          if (result.steps !== null && result.confidence >= 0.6) {
+            render('ai', `Распознал ${result.steps} шагов${result.date ? ' за ' + result.date : ''}.`);
+            const reply = await sendMessage(userId, `Прошёл ${result.steps} шагов сегодня`);
+            render('ai', reply);
+          } else {
+            render('ai', result.message || 'Не смог прочитать. Введи шаги вручную.');
+          }
+        } catch (err) {
+          if (err.status === 429) {
+            render('ai', 'Лимит скриншотов на сегодня исчерпан. Введи шаги вручную.');
+          } else if (err.status === 503) {
+            render('ai', 'Сервис временно недоступен. Введи шаги вручную.');
+          } else {
+            render('ai', 'Не удалось отправить. Попробуй ещё.');
+          }
+        } finally {
+          attachBtn.disabled = false;
+          fileInput.value = '';
+        }
+      });
+    }
   }
 
   return {
     API_BASE, LS_KEY,
     escapeHtml, saveUserId, getUserId, buildFirstMessage,
-    submitOnboarding, sendMessage, initWidget,
+    submitOnboarding, sendMessage, submitScreenshot, initWidget,
   };
 });
 

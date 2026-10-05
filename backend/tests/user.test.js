@@ -20,6 +20,22 @@ describe('POST /api/user — Telegram', () => {
 
   beforeEach(() => {
     notifyNewUser.mockClear();
+    test('Тест 3: current_steps = null не падает', async () => {
+  const email = `tg-null-${Date.now()}@example.com`;
+  createdEmails.push(email);
+
+  const res = await request(app)
+    .post('/api/user')
+    .send({ email, name: 'TG Null', daily_goal: 6000 });
+
+  expect(res.status).toBe(201);
+
+  await new Promise(r => setImmediate(r));
+
+  expect(notifyNewUser).toHaveBeenCalledTimes(1);
+  const arg = notifyNewUser.mock.calls[0][0];
+  expect(arg.avg_steps).toBeUndefined();
+});
   });
 
   test('Тест 1: notifyNewUser вызывается при создании', async () => {

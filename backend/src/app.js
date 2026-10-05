@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const userRoutes = require('./routes/user');
 const stepsRoutes = require('./routes/steps');
 const chatRoutes = require('./routes/chat');
+const screenshotRoutes = require('./routes/screenshot');
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.get('/', (req, res) => {
 app.use('/api/user', userRoutes);
 app.use('/api/steps', stepsRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/screenshot', screenshotRoutes);
 
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));

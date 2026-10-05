@@ -35,12 +35,23 @@ test('localStorage: walk_ai_user_id', () => {
   expect(widget.getUserId()).toBe(42);
 });
 
-test('submitOnboarding: POST /api/user без current_steps', async () => {
+test('submitOnboarding: POST /api/user с current_steps', async () => {
   global.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ user: { id: 1 } }) });
   await widget.submitOnboarding({ email: 'a@b.c', name: 'X', currentSteps: 4000, dailyGoal: 7000 });
   const body = JSON.parse(global.fetch.mock.calls[0][1].body);
-  expect(body).toEqual({ email: 'a@b.c', name: 'X', daily_goal: 7000 });
-  expect(body.current_steps).toBeUndefined();
+  expect(body).toEqual({
+    email: 'a@b.c',
+    name: 'X',
+    daily_goal: 7000,
+    current_steps: 4000,
+  });
+});
+
+test('submitOnboarding: current_steps = null, если не задан', async () => {
+  global.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ user: { id: 1 } }) });
+  await widget.submitOnboarding({ email: 'a@b.c', name: 'X', currentSteps: '', dailyGoal: 7000 });
+  const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+  expect(body.current_steps).toBeNull();
 });
 
 test('sendMessage: передаёт startingSteps', async () => {
