@@ -24,6 +24,13 @@ app.use(morgan('dev'));
 app.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'walking-motivator', version: '0.1.0' });
 });
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Роуты
 app.use('/api/user', userRoutes);
