@@ -3,10 +3,9 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.WalkAI = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
-    const API_BASE = 'https://walking-motivator.duckdns.org';
+  const API_BASE = 'https://walking-motivator.duckdns.org';
   const LS_KEY = 'walk_ai_user_id';
-  const NGROK_HEADER = { 'ngrok-skip-browser-warning': 'true' };
-
+ 
   function escapeHtml(s) {
     if (s == null) return '';
     return String(s)
@@ -32,7 +31,6 @@
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...NGROK_HEADER,
       },
       body: JSON.stringify({
         email,
@@ -52,7 +50,6 @@
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...NGROK_HEADER,
       },
       body: JSON.stringify(body),
     });
@@ -68,7 +65,6 @@
 
     const res = await fetch(`${API_BASE}/api/screenshot`, {
       method: 'POST',
-      headers: { ...NGROK_HEADER },
       body: formData,
     });
 
